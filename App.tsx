@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { SearchForm } from './components/SearchForm';
 import { LoadingSpinner } from './components/LoadingSpinner';
@@ -13,6 +12,7 @@ import type { Source, SavedSearch, ChartDataItem } from './types';
 const App: React.FC = () => {
     const [query, setQuery] = useState<string>('');
     const [response, setResponse] = useState<string | null>(null);
+    const [summary, setSummary] = useState<string | null>(null);
     const [sources, setSources] = useState<Source[]>([]);
     const [chartData, setChartData] = useState<ChartDataItem[]>([]);
     const [knowledgeTags, setKnowledgeTags] = useState<string[]>([]);
@@ -28,6 +28,7 @@ const App: React.FC = () => {
 
     const clearResults = () => {
         setResponse(null);
+        setSummary(null);
         setSources([]);
         setChartData([]);
         setKnowledgeTags([]);
@@ -51,6 +52,7 @@ const App: React.FC = () => {
                 timestamp: new Date().toISOString(),
                 query: searchQuery,
                 response: result.text,
+                summary: result.summary,
                 sources: result.sources,
                 chartData: result.chartData,
                 knowledgeTags: result.knowledgeTags,
@@ -58,6 +60,7 @@ const App: React.FC = () => {
             };
 
             setResponse(result.text);
+            setSummary(result.summary);
             setSources(result.sources);
             setChartData(result.chartData);
             setKnowledgeTags(result.knowledgeTags);
@@ -83,6 +86,7 @@ const App: React.FC = () => {
         if (searchToLoad) {
             setQuery(searchToLoad.query);
             setResponse(searchToLoad.response);
+            setSummary(searchToLoad.summary || null);
             setSources(searchToLoad.sources);
             setChartData(searchToLoad.chartData || []);
             setKnowledgeTags(searchToLoad.knowledgeTags || []);
@@ -120,6 +124,10 @@ const App: React.FC = () => {
 
         let markdownContent = `# Patent Research: ${activeSearch.query}\n\n`;
         markdownContent += `**Date:** ${new Date(activeSearch.timestamp).toLocaleString()}\n\n`;
+        
+        if (activeSearch.summary) {
+            markdownContent += `## Patent Pulse Summary\n\n_${activeSearch.summary}_\n\n`;
+        }
 
         if (activeSearch.knowledgeTags && activeSearch.knowledgeTags.length > 0) {
             markdownContent += `## Required Knowledge\n\n`;
@@ -165,7 +173,7 @@ const App: React.FC = () => {
                             Dive deep into patents, understand the tech, and learn to build prototypes.
                         </p>
                     </header>
-                    <SearchForm onSearch={handleSearch} isLoading={isLoading} initialQuery={query} />
+                    <SearchForm onSearch={handleSearch} isLoading={isLoading} initialQuery={query} setQuery={setQuery} />
                     <SavedSearches searches={savedSearches} onLoad={handleLoadSearch} onDelete={handleDeleteSearch} activeSearchId={activeSearchId} />
                 </div>
                 
@@ -183,6 +191,7 @@ const App: React.FC = () => {
                       <div className="flex flex-col gap-8">
                         <ResultsDisplay 
                             response={response}
+                            summary={summary}
                             chartData={chartData}
                             knowledgeTags={knowledgeTags}
                         />

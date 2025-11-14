@@ -1,4 +1,3 @@
-
 export interface GroundingChunk {
   web?: {
     uri: string;
@@ -27,6 +26,7 @@ export interface SavedSearch {
   response: string;
   sources: Source[];
   notes: string;
+  summary?: string;
   chartData?: ChartDataItem[];
   knowledgeTags?: string[];
 }

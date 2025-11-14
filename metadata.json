@@ -1,5 +1,7 @@
 {
   "name": "Patent Explorer AI",
   "description": "An educational app that uses Google Search grounding with the Gemini API to perform deep dives into patents, explaining the principles behind them and how to build prototypes.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }
