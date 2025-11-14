@@ -15,6 +15,11 @@ export interface Source {
   title: string;
 }
 
+export interface ChartDataItem {
+    name: string;
+    value: number;
+}
+
 export interface SavedSearch {
   id: string;
   timestamp: string;
@@ -22,4 +27,6 @@ export interface SavedSearch {
   response: string;
   sources: Source[];
   notes: string;
+  chartData?: ChartDataItem[];
+  knowledgeTags?: string[];
 }

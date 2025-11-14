@@ -8,12 +8,14 @@ import { SavedSearches } from './components/SavedSearches';
 import { Notes } from './components/Notes';
 import { fetchPatentInfo } from './services/geminiService';
 import { getSavedSearches, saveSearches } from './services/storageService';
-import type { Source, SavedSearch } from './types';
+import type { Source, SavedSearch, ChartDataItem } from './types';
 
 const App: React.FC = () => {
     const [query, setQuery] = useState<string>('');
     const [response, setResponse] = useState<string | null>(null);
     const [sources, setSources] = useState<Source[]>([]);
+    const [chartData, setChartData] = useState<ChartDataItem[]>([]);
+    const [knowledgeTags, setKnowledgeTags] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
@@ -24,6 +26,14 @@ const App: React.FC = () => {
         setSavedSearches(getSavedSearches());
     }, []);
 
+    const clearResults = () => {
+        setResponse(null);
+        setSources([]);
+        setChartData([]);
+        setKnowledgeTags([]);
+        setCurrentNotes('');
+    };
+
     const handleSearch = useCallback(async (searchQuery: string) => {
         if (!searchQuery.trim()) {
             setError("Please enter a topic to search.");
@@ -31,8 +41,7 @@ const App: React.FC = () => {
         }
         setIsLoading(true);
         setError(null);
-        setResponse(null);
-        setSources([]);
+        clearResults();
         setQuery(searchQuery);
 
         try {
@@ -43,11 +52,15 @@ const App: React.FC = () => {
                 query: searchQuery,
                 response: result.text,
                 sources: result.sources,
+                chartData: result.chartData,
+                knowledgeTags: result.knowledgeTags,
                 notes: '',
             };
 
             setResponse(result.text);
             setSources(result.sources);
+            setChartData(result.chartData);
+            setKnowledgeTags(result.knowledgeTags);
             setCurrentNotes('');
             setActiveSearchId(newSearch.id);
             
@@ -71,6 +84,8 @@ const App: React.FC = () => {
             setQuery(searchToLoad.query);
             setResponse(searchToLoad.response);
             setSources(searchToLoad.sources);
+            setChartData(searchToLoad.chartData || []);
+            setKnowledgeTags(searchToLoad.knowledgeTags || []);
             setCurrentNotes(searchToLoad.notes);
             setActiveSearchId(searchToLoad.id);
             setError(null);
@@ -83,9 +98,7 @@ const App: React.FC = () => {
         saveSearches(updatedSearches);
 
         if (activeSearchId === id) {
-            setResponse(null);
-            setSources([]);
-            setCurrentNotes('');
+            clearResults();
             setActiveSearchId(null);
             setQuery('');
         }
@@ -99,7 +112,6 @@ const App: React.FC = () => {
         );
         setSavedSearches(updatedSearches);
         saveSearches(updatedSearches);
-        // Optionally, add a small feedback message
     }, [activeSearchId, currentNotes, savedSearches]);
     
     const handleExportSearch = useCallback(() => {
@@ -108,6 +120,12 @@ const App: React.FC = () => {
 
         let markdownContent = `# Patent Research: ${activeSearch.query}\n\n`;
         markdownContent += `**Date:** ${new Date(activeSearch.timestamp).toLocaleString()}\n\n`;
+
+        if (activeSearch.knowledgeTags && activeSearch.knowledgeTags.length > 0) {
+            markdownContent += `## Required Knowledge\n\n`;
+            markdownContent += `\`${activeSearch.knowledgeTags.join('`, `')}\`\n\n`;
+        }
+        
         markdownContent += `## Research Findings\n\n${activeSearch.response}\n\n`;
         
         if (activeSearch.sources.length > 0) {
@@ -163,7 +181,11 @@ const App: React.FC = () => {
                     
                     {response && (
                       <div className="flex flex-col gap-8">
-                        <ResultsDisplay response={response} />
+                        <ResultsDisplay 
+                            response={response}
+                            chartData={chartData}
+                            knowledgeTags={knowledgeTags}
+                        />
                         <Sources sources={sources} />
                         <Notes 
                             notes={currentNotes} 
